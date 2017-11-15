@@ -131,9 +131,8 @@ def plot_rolling_averages(span):
 def rollin_average_strategy(span):
     close = adj_close()
     exp_rolling = close.ewm(span=span, adjust=False).mean()
-    weights = (close - exp_rolling).apply(np.sign())*1/3
+    weights = (close - exp_rolling).apply(np.sign()) * 1 / 3
     weights_lagged = weights.shift(1)
-
 
 
 if __name__ == '__main__':
