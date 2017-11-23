@@ -1,5 +1,6 @@
 from pandas_datareader import data
 from pandas_datareader._utils import RemoteDataError
+import src.data.utility as utility
 import os
 import pandas as pd
 import settings
@@ -27,7 +28,7 @@ def get_all_tickers():
 
 
 def download_and_save(ticker):
-    path = os.path.join(settings.RESOURCES_ROOT, suffix, ticker + '.csv')
+    path = utility.ticker_csv_path(ticker, suffix)
 
     if not os.path.isfile(path):
         print('getting ' + ticker)
@@ -36,11 +37,11 @@ def download_and_save(ticker):
         except RemoteDataError:
             print("Retrying in 30 seconds")
             time.sleep(30)
-        try:
-            get_historical_data(ticker).to_csv(path)
-        except RemoteDataError:
-            print("Giving up on " + ticker)
-            return
+            try:
+                get_historical_data(ticker).to_csv(path)
+            except RemoteDataError:
+                print("Giving up on " + ticker)
+                return
 
 
 def get_historical_data(ticker):
