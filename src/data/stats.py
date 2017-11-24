@@ -3,9 +3,6 @@ import pandas as pd
 import os
 
 
-# TODO create market object which can have all the csv data in the market loaded
-
-
 def get_start_date(ticker, market_code):
     path = utility.ticker_csv_path(ticker, market_code)
     data = utility.get_data_from_csv(path)
