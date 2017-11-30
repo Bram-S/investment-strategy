@@ -10,7 +10,8 @@ import time
 
 
 class Market:
-    start_date = '1990-01-01'
+    # start_date = '1990-01-01'
+    start_date = datetime.date(1990, 1, 1)
     data_source = 'yahoo'
 
     def __init__(self, code):
@@ -43,14 +44,13 @@ class Market:
         self.stocks_data = pd.Series(stocks_data)
 
     def get_stock_data(self, stock_name):
-        if stock_name not in self.stocks_data:
-            self.stocks_data[stock_name] = StockData.StockData(self.code, stock_name)
+        if stock_name not in self.stock_names:
+            raise ValueError
 
-        return self.stocks_data.at[stock_name]
+        if stock_name in self.stocks_data.index:
+            return self.stocks_data.at[stock_name]
 
-    def download_all_stock_data(self):
-        for stock_name in self.read_all_stock_names():
-            self.download_stock_data(stock_name)
+        return StockData.StockData(self.code, stock_name)
 
     def read_all_stock_names(self):
         path = os.path.join(settings.RESOURCES_ROOT, self.stocks_file)
@@ -58,28 +58,45 @@ class Market:
 
         return stock_names_data.loc[stock_names_data['Market'] == self.name]['Symbol']
 
-    def download_stock_data(self, stock_name):
-        path = os.path.join(self.path, stock_name + '.csv')
+    def download_all_stock_data(self):
+        end_date = datetime.datetime.today().date()
 
-        if not os.path.isfile(path):
-            print('getting ' + stock_name)
+        for stock_name in self.read_all_stock_names():
+            path = os.path.join(self.path, stock_name + '.csv')
+            if os.path.isfile(path):
+                # TODO now all data starts from the old start date => fix
+                stock_data = self.update_stock_data(self.get_stock_data(stock_name), stock_name, end_date, path)
+            else:
+                stock_data = self.download_stock_data(stock_name, self.start_date, end_date, path)
+
+            if stock_data is not None:
+                stock_data.to_csv(path)
+
+    def update_stock_data(self, stock_data, stock_name, end_date, path):
+        start_date = stock_data.end_date()
+        new_data = self.download_stock_data(stock_name, start_date, end_date, path)
+
+        return pd.concat([stock_data.data, new_data])
+
+    def download_stock_data(self, stock_name, start_date, end_date, path):
+        if start_date != end_date:
+            print('Downloading ' + stock_name)
             try:
-                self.download_stock_data_core(stock_name).to_csv(path)
+                stock_data = self.download_stock_data_core(path, stock_name, start_date, end_date)
             except RemoteDataError:
-                print("Retrying in 30 seconds")
+                print("Retrying " + stock_name + " in 30 seconds")
                 time.sleep(30)
                 try:
-                    self.download_stock_data_core(stock_name).to_csv(path)
+                    stock_data = self.download_stock_data_core(path, stock_name, start_date, end_date)
                 except RemoteDataError:
                     print("Giving up on " + stock_name)
-                    return
 
-    def download_stock_data_core(self, stock_name):
-        end_date = datetime.datetime.now()
+        return stock_data
 
-        return data.DataReader(stock_name + "." + self.code, self.data_source, self.start_date, end_date)
+    def download_stock_data_core(self, path, stock_name, start_date, end_date):
+        # TODO experiment with pause and retry parameters to avoid having to do error checking in calling method
+        return data.DataReader(stock_name + "." + self.code, self.data_source, start_date, end_date)
 
 
 if __name__ == '__main__':
-    market = Market('BR')
-    market.download_all_stock_data()
+    Market('BR').download_all_stock_data()
