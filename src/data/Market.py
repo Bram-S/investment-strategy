@@ -58,40 +58,41 @@ class Market:
 
         return stock_names_data.loc[stock_names_data['Market'] == self.name]['Symbol']
 
-    def download_all_stock_data(self):
+    def download_all_stock_data(self, update_limit=2):
         end_date = datetime.datetime.today().date()
 
         for stock_name in self.read_all_stock_names():
             path = os.path.join(self.path, stock_name + '.csv')
             if os.path.isfile(path):
-                stock_data = self.update_stock_data(self.get_stock_data(stock_name), stock_name, end_date, path)
+                stock_data = self.update_stock_data(self.get_stock_data(stock_name), stock_name, end_date, update_limit)
             else:
-                stock_data = self.download_stock_data(stock_name, self.start_date, end_date, path)
+                stock_data = self.download_stock_data(stock_name, self.start_date, end_date, update_limit)
 
             if stock_data is not None:
                 stock_data.to_csv(path)
 
-    def update_stock_data(self, stock_data, stock_name, end_date, path):
+    def update_stock_data(self, stock_data, stock_name, end_date, update_limit):
         start_date = stock_data.end_date()
-        new_data = self.download_stock_data(stock_name, start_date, end_date, path)
+        new_data = self.download_stock_data(stock_name, start_date, end_date, update_limit)
 
         return pd.concat([stock_data.data, new_data])
 
-    def download_stock_data(self, stock_name, start_date, end_date, path):
+    def download_stock_data(self, stock_name, start_date, end_date, update_limit):
         stock_data = None
 
-        if start_date != end_date:
-            print('Downloading ' + stock_name)
-            try:
-                stock_data = self.download_stock_data_core(stock_name, start_date, end_date)
-            except RemoteDataError:
-                print("Giving up on " + stock_name)
+        if (end_date - start_date).days > update_limit:
+            if start_date != end_date:
+                print('Downloading ' + stock_name)
+                try:
+                    stock_data = self.download_stock_data_core(stock_name, start_date, end_date)
+                except RemoteDataError:
+                    print("Giving up on " + stock_name)
 
         return stock_data
 
     def download_stock_data_core(self, stock_name, start_date, end_date):
         url_code = stock_name + "." + self.code
-        return data.DataReader(url_code, self.data_source, start_date, end_date, retry_count=3, pause=10)
+        return data.DataReader(url_code, self.data_source, start_date, end_date, retry_count=3, pause=3)
 
 
 if __name__ == '__main__':
