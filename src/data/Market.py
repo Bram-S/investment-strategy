@@ -64,7 +64,6 @@ class Market:
         for stock_name in self.read_all_stock_names():
             path = os.path.join(self.path, stock_name + '.csv')
             if os.path.isfile(path):
-                # TODO now all data starts from the old start date => fix
                 stock_data = self.update_stock_data(self.get_stock_data(stock_name), stock_name, end_date, path)
             else:
                 stock_data = self.download_stock_data(stock_name, self.start_date, end_date, path)
@@ -79,23 +78,20 @@ class Market:
         return pd.concat([stock_data.data, new_data])
 
     def download_stock_data(self, stock_name, start_date, end_date, path):
+        stock_data = None
+
         if start_date != end_date:
             print('Downloading ' + stock_name)
             try:
-                stock_data = self.download_stock_data_core(path, stock_name, start_date, end_date)
+                stock_data = self.download_stock_data_core(stock_name, start_date, end_date)
             except RemoteDataError:
-                print("Retrying " + stock_name + " in 30 seconds")
-                time.sleep(30)
-                try:
-                    stock_data = self.download_stock_data_core(path, stock_name, start_date, end_date)
-                except RemoteDataError:
-                    print("Giving up on " + stock_name)
+                print("Giving up on " + stock_name)
 
         return stock_data
 
-    def download_stock_data_core(self, path, stock_name, start_date, end_date):
-        # TODO experiment with pause and retry parameters to avoid having to do error checking in calling method
-        return data.DataReader(stock_name + "." + self.code, self.data_source, start_date, end_date)
+    def download_stock_data_core(self, stock_name, start_date, end_date):
+        url_code = stock_name + "." + self.code
+        return data.DataReader(url_code, self.data_source, start_date, end_date, retry_count=3, pause=10)
 
 
 if __name__ == '__main__':
