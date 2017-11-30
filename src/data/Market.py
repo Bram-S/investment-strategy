@@ -6,11 +6,9 @@ import settings
 import src.data.StockData as StockData
 import json
 import datetime
-import time
 
 
 class Market:
-    # start_date = '1990-01-01'
     start_date = datetime.date(1990, 1, 1)
     data_source = 'yahoo'
 
