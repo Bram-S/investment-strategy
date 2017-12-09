@@ -2,10 +2,13 @@ import os
 import settings
 import pandas as pd
 import src.data.dates as dates
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 class StockData:
     date_column = 'Date'
+    adj_close_column = 'Adj Close'
 
     def __init__(self, market_code, ticker):
         self.ticker = ticker
@@ -20,7 +23,29 @@ class StockData:
     def end_date(self):
         return self.data.index[-1].date()
 
+    def adjusted_close(self):
+        return self.data[self.adj_close_column]
+
+    def plot(self):
+        self.adjusted_close().plot(grid=True)
+        plt.show()
+
+    def daily_returns(self):
+        return self.adjusted_close().pct_change().fillna(0)
+
+    def cumulative_daily_returns(self):
+        return (1 + self.daily_returns()).cumprod()
+
+    def cumulative_monthly_returns(self):
+        return self.cumulative_daily_returns().resample('M').mean()
+
+    def daily_log_returns(self):
+        return np.log(1 + self.daily_returns())
+
+    def momentum(self, months):
+        return None
+
 
 if __name__ == '__main__':
-    data = StockData('BR', 'VALOR')
-    print(data.end_date())
+    data = StockData('BR', 'KBC')
+    data.plot()
