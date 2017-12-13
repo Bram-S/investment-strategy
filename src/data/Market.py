@@ -90,6 +90,8 @@ class Market:
 
     def download_stock_data_core(self, stock_name, start_date, end_date):
         url_code = stock_name + "." + self.code
+        # TODO this will return data before start_date when no new data exists => don't add results in this case,
+        # if we do it leads to copied lines of the same date as in e.g. MOPF.csv
         return data.DataReader(url_code, self.data_source, start_date, end_date, retry_count=3, pause=3)
 
 

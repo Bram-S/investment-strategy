@@ -9,6 +9,7 @@ class MovingAverage:
     long_window = 100
     short_av_column = 'short_moving_average'
     long_av_column = 'long_moving_average'
+    # TODO don't have a column with same name as dataFrame
     signal_column = 'signal'
     positions_column = 'positions'
 
@@ -27,6 +28,9 @@ class MovingAverage:
                                                                              self.short_window:]
         self.signals.loc[self.short_window:, self.signal_column] = np.where(condition, 1, 0)
         self.signals[self.positions_column] = self.signals[self.signal_column].diff()
+
+    def signals(self):
+        return self.signals[self.signal_column]
 
     def plot(self):
         self.run()
