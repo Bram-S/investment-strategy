@@ -17,8 +17,9 @@ class StockData:
         self.data = self.load_data_csv()
 
     def load_data_csv(self):
-        return pd.read_csv(self.path, index_col=self.date_column, parse_dates=[self.date_column],
-                           date_parser=dates.date_parser)
+        csv = pd.read_csv(self.path, index_col=self.date_column, parse_dates=[self.date_column],
+                          date_parser=dates.date_parser)
+        return csv.dropna()
 
     def end_date(self):
         return self.data.index[-1].date()
