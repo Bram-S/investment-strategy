@@ -92,8 +92,21 @@ class Market:
         url_code = stock_name + "." + self.code
         # TODO this will return data before start_date when no new data exists => don't add results in this case,
         # if we do it leads to copied lines of the same date as in e.g. MOPF.csv
+        # update KBC also contains multiple lines with same date
         return data.DataReader(url_code, self.data_source, start_date, end_date, retry_count=3, pause=3)
+
+    def momenta(self, months=12):
+        momenta = {}
+
+        if self.stocks_data.shape[0] < 1:
+            self.load_stocks_data()
+
+        for stock_data in self.stocks_data:
+            if stock_data.number_of_whole_months() >= months:
+                momenta[stock_data.ticker] = stock_data.last_months_total_return(months)
+
+        return pd.Series(momenta).sort_values()
 
 
 if __name__ == '__main__':
-    Market('BR').download_all_stock_data()
+    Market('BR').momenta()

@@ -18,16 +18,19 @@ class MovingAverage:
         self.market_code = market_code
         self.data = stockData.StockData(market_code, ticker)
         self.signals = pd.DataFrame(index=self.data.data.index)
-        self.signals[self.signal_column] = 0
 
     def run(self):
         data_close = self.data.adjusted_close()
+        self.signals[self.signal_column] = 0
         self.signals[self.short_av_column] = data_close.rolling(window=self.short_window, min_periods=1).mean()
         self.signals[self.long_av_column] = data_close.rolling(window=self.long_window, min_periods=1).mean()
         condition = self.signals[self.short_av_column][self.short_window:] > self.signals[self.long_av_column][
                                                                              self.short_window:]
         self.signals.loc[self.short_window:, self.signal_column] = np.where(condition, 1, 0)
         self.signals[self.positions_column] = self.signals[self.signal_column].diff()
+
+    def positions(self):
+        return self.signals[self.positions_column]
 
     def signals(self):
         return self.signals[self.signal_column]
