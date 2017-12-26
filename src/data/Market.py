@@ -15,8 +15,8 @@ class Market:
     def __init__(self, code):
         self.code = code
         self.path = os.path.join(settings.RESOURCES_ROOT, code)
-        self.stocks_data = self.load_stocks_data()
         self.stock_names = self._get_stock_names()
+        self.stocks_data = self.load_stocks_data()
 
     def _get_stock_names(self):
         stocks = []
@@ -44,40 +44,41 @@ class Market:
 
         return StockData.StockData(self.code, stock_name)
 
-    def download_all_stock_data(self, update_limit=2):
+    def download_all_stock_data(self, update_limit=1):
         end_date = datetime.datetime.today().date()
 
         for stock_name in allStocks.read_all_stock_names(self.code):
             path = os.path.join(self.path, stock_name + '.csv')
             if os.path.isfile(path):
-                stock_data = self.update_stock_data(self.get_stock_data(stock_name), stock_name, end_date, update_limit)
+                stock_data = self._update_stock_data(self.get_stock_data(stock_name), stock_name, end_date,
+                                                     update_limit)
             else:
-                stock_data = self.download_stock_data(stock_name, self.start_date, end_date, update_limit)
+                stock_data = self._download_stock_data(stock_name, self.start_date, end_date, update_limit)
 
             if stock_data is not None:
                 stock_data.to_csv(path)
 
-    def update_stock_data(self, stock_data, stock_name, end_date, update_limit):
+    def _update_stock_data(self, stock_data, stock_name, end_date, update_limit):
         start_date = stock_data.end_date()
-        new_data = self.download_stock_data(stock_name, start_date, end_date, update_limit)
+        new_data = self._download_stock_data(stock_name, start_date, end_date, update_limit)
         concatenated = pd.concat([stock_data.data, new_data])
 
         return concatenated[~concatenated.duplicated()]
 
-    def download_stock_data(self, stock_name, start_date, end_date, update_limit):
+    def _download_stock_data(self, stock_name, start_date, end_date, update_limit):
         stock_data = None
 
         if (end_date - start_date).days > update_limit:
             if start_date != end_date:
                 print('Downloading ' + stock_name)
                 try:
-                    stock_data = self.download_stock_data_core(stock_name, start_date, end_date)
+                    stock_data = self._download_stock_data_core(stock_name, start_date, end_date)
                 except RemoteDataError:
                     print("Giving up on " + stock_name)
 
         return stock_data
 
-    def download_stock_data_core(self, stock_name, start_date, end_date):
+    def _download_stock_data_core(self, stock_name, start_date, end_date):
         url_code = stock_name + "." + self.code
         # TODO this will return data before start_date when no new data exists => don't add results in this case,
         # if we do it leads to copied lines of the same date as in e.g. MOPF.csv
@@ -98,4 +99,4 @@ class Market:
 
 
 if __name__ == '__main__':
-    Market('BR').momenta()
+    Market('BR').download_all_stock_data()
