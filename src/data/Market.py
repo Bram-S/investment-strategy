@@ -1,10 +1,10 @@
 import pandas as pd
 from pandas_datareader import data
 from pandas_datareader._utils import RemoteDataError
+import src.data.allMarketStocks as allStocks
 import os
 import settings
 import src.data.StockData as StockData
-import json
 import datetime
 
 
@@ -17,12 +17,6 @@ class Market:
         self.path = os.path.join(settings.RESOURCES_ROOT, code)
         self.stocks_data = self.load_stocks_data()
         self.stock_names = self._get_stock_names()
-
-        with open(os.path.join(self.path, 'config.json')) as config:
-            config = json.load(config)
-
-        self.name = config['market_name']
-        self.stocks_file = config["all_stocks_file"]
 
     def _get_stock_names(self):
         stocks = []
@@ -50,16 +44,10 @@ class Market:
 
         return StockData.StockData(self.code, stock_name)
 
-    def read_all_stock_names(self):
-        path = os.path.join(settings.RESOURCES_ROOT, self.stocks_file)
-        stock_names_data = pd.read_csv(path, sep='\t')
-
-        return stock_names_data.loc[stock_names_data['Market'] == self.name]['Symbol']
-
     def download_all_stock_data(self, update_limit=2):
         end_date = datetime.datetime.today().date()
 
-        for stock_name in self.read_all_stock_names():
+        for stock_name in allStocks.read_all_stock_names(self.code):
             path = os.path.join(self.path, stock_name + '.csv')
             if os.path.isfile(path):
                 stock_data = self.update_stock_data(self.get_stock_data(stock_name), stock_name, end_date, update_limit)
@@ -72,8 +60,9 @@ class Market:
     def update_stock_data(self, stock_data, stock_name, end_date, update_limit):
         start_date = stock_data.end_date()
         new_data = self.download_stock_data(stock_name, start_date, end_date, update_limit)
+        concatenated = pd.concat([stock_data.data, new_data])
 
-        return pd.concat([stock_data.data, new_data])
+        return concatenated[~concatenated.duplicated()]
 
     def download_stock_data(self, stock_name, start_date, end_date, update_limit):
         stock_data = None
@@ -92,7 +81,7 @@ class Market:
         url_code = stock_name + "." + self.code
         # TODO this will return data before start_date when no new data exists => don't add results in this case,
         # if we do it leads to copied lines of the same date as in e.g. MOPF.csv
-        # update KBC also contains multiple lines with same date
+        # update: KBC also contains multiple lines with same date
         return data.DataReader(url_code, self.data_source, start_date, end_date, retry_count=3, pause=3)
 
     def momenta(self, months=12):
