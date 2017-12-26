@@ -15,7 +15,7 @@ class Market:
     def __init__(self, code):
         self.code = code
         self.path = os.path.join(settings.RESOURCES_ROOT, code)
-        self.stocks_data = pd.Series({})
+        self.stocks_data = self.load_stocks_data()
         self.stock_names = self._get_stock_names()
 
         with open(os.path.join(self.path, 'config.json')) as config:
@@ -39,7 +39,7 @@ class Market:
         for stock_name in self.stock_names:
             stocks_data[stock_name] = StockData.StockData(self.code, stock_name)
 
-        self.stocks_data = pd.Series(stocks_data)
+        return pd.Series(stocks_data)
 
     def get_stock_data(self, stock_name):
         if stock_name not in self.stock_names:
@@ -97,15 +97,15 @@ class Market:
 
     def momenta(self, months=12):
         momenta = {}
-
-        if self.stocks_data.shape[0] < 1:
-            self.load_stocks_data()
+        volumes = {}
 
         for stock_data in self.stocks_data:
             if stock_data.number_of_whole_months() >= months:
                 momenta[stock_data.ticker] = stock_data.last_months_total_return(months)
+                volumes[stock_data.ticker] = stock_data.last_months_mean_volume(months)
 
-        return pd.Series(momenta).sort_values()
+        result = pd.DataFrame({'Momentum': momenta, 'Mean Volume': volumes}).sort_values(by=['Momentum'])
+        result.to_csv(os.path.join(settings.RESOURCES_ROOT, 'out', 'momenta.csv'))
 
 
 if __name__ == '__main__':

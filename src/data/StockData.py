@@ -9,6 +9,7 @@ import numpy as np
 class StockData:
     date_column = 'Date'
     adj_close_column = 'Adj Close'
+    volume_column = 'Volume'
 
     def __init__(self, market_code, ticker):
         self.ticker = ticker
@@ -43,6 +44,9 @@ class StockData:
         cum_returns = (1 + month_returns).cumprod()
 
         return cum_returns[-1] - 1
+
+    def last_months_mean_volume(self, months):
+        return self.data[self.volume_column].resample('BM', convention='end').asfreq()[-months - 1:-1].mean()
 
     def cumulative_daily_returns(self):
         return (1 + self.daily_returns()).cumprod()
