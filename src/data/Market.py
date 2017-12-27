@@ -6,6 +6,7 @@ import os
 import settings
 import src.data.StockData as StockData
 import datetime
+import src.data.stockActions as stockActions
 
 
 class Market:
@@ -33,10 +34,13 @@ class Market:
         return stocks
 
     def load_stocks_data(self):
+        print('Loading stocks data')
         stocks_data = {}
 
         for stock_name in self.stock_names:
             stocks_data[stock_name] = StockData.StockData(self.code, stock_name)
+
+        print('Loading stocks data done')
 
         return pd.Series(stocks_data)
 
@@ -51,9 +55,11 @@ class Market:
 
     def download_all_stock_data(self, update_limit=1, data_type='data'):
         if data_type == 'actions':
+            print('Downloading actions')
             source = self.actions_source
             path_root = self.actions_path
         else:
+            print('Downloading data')
             source = self.data_source
             path_root = self.data_path
         end_date = datetime.datetime.today().date()
@@ -61,17 +67,24 @@ class Market:
         for stock_name in allStocks.read_all_stock_names(self.code):
             path = os.path.join(path_root, stock_name + '.csv')
             if os.path.isfile(path):
-                stock_data = self.get_stock_data(stock_name)
-                stock_data = self._update_stock_data(stock_data, source, stock_name, end_date, update_limit)
-                stock_data.to_csv(path)
+                stock_data = self._update_stock_data(source, stock_name, end_date, update_limit)
             else:
                 stock_data = self._download_stock_data(stock_name, source, self.start_date, end_date, update_limit)
+
+            if stock_data is not None:
                 stock_data.to_csv(path)
 
-    def _update_stock_data(self, stock_data, data_source, stock_name, end_date, update_limit):
-        start_date = stock_data.end_date()
+        print('Downloading done')
+
+    def _update_stock_data(self, data_source, stock_name, end_date, update_limit):
+        if data_source == self.actions_path:
+            old_data = stockActions.StockActions(self.code, stock_name)
+        else:
+            old_data = self.get_stock_data(stock_name)
+
+        start_date = old_data.end_date()
         new_data = self._download_stock_data(stock_name, data_source, start_date, end_date, update_limit)
-        concatenated = pd.concat([stock_data.data, new_data])
+        concatenated = pd.concat([old_data.data, new_data])
 
         return concatenated[~concatenated.duplicated()]
 
@@ -90,10 +103,11 @@ class Market:
 
     def _download_stock_data_core(self, stock_name, data_source, start_date, end_date):
         url_code = stock_name + "." + self.code
-        # TODO this will return data before start_date when no new data exists => don't add results in this case,
-        # if we do it leads to copied lines of the same date as in e.g. MOPF.csv
-        # update: KBC also contains multiple lines with same date
-        return data.DataReader(url_code, data_source, start_date, end_date, retry_count=3, pause=3)
+        try:
+            return data.DataReader(url_code, data_source, start_date, end_date, retry_count=3, pause=3).sort_index()
+        except ValueError:
+            print("No data found for " + stock_name)
+            return None
 
     def momenta(self, months=12):
         momenta = {}
@@ -109,4 +123,5 @@ class Market:
 
 
 if __name__ == '__main__':
+    # Market('BR').momenta()
     Market('BR').download_all_stock_data(data_type='actions')

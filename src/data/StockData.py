@@ -1,9 +1,8 @@
 import os
 import settings
-import pandas as pd
-import src.data.dates as dates
 import matplotlib.pyplot as plt
 import numpy as np
+import src.data.dataLoader as dataLoader
 
 
 class StockData:
@@ -16,13 +15,8 @@ class StockData:
         self.market_code = market_code
         # TODO this path is used in Market and here => should set somewhere central
         self.path = os.path.join(settings.RESOURCES_ROOT, market_code, 'data', ticker + '.csv')
-        csv_data = self.load_data_csv()
+        csv_data = dataLoader.load_data_csv(self.path, self.date_column)
         self.data = csv_data[~csv_data.index.duplicated()]
-
-    def load_data_csv(self):
-        csv = pd.read_csv(self.path, index_col=self.date_column, parse_dates=[self.date_column],
-                          date_parser=dates.date_parser)
-        return csv
 
     def end_date(self):
         return self.data.index[-1].date()
