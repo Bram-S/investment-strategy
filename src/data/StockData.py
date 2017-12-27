@@ -14,7 +14,8 @@ class StockData:
     def __init__(self, market_code, ticker):
         self.ticker = ticker
         self.market_code = market_code
-        self.path = os.path.join(settings.RESOURCES_ROOT, market_code, ticker + '.csv')
+        # TODO this path is used in Market and here => should set somewhere central
+        self.path = os.path.join(settings.RESOURCES_ROOT, market_code, 'data', ticker + '.csv')
         csv_data = self.load_data_csv()
         self.data = csv_data[~csv_data.index.duplicated()]
 
