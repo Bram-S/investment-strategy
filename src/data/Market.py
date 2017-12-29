@@ -128,4 +128,4 @@ class Market:
 
 if __name__ == '__main__':
     # Market('BR').momenta()
-    Market('BR').download_all_stock_data()
+    Market('BR').download_all_stock_data(data_type='actions')
