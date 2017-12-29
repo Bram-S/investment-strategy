@@ -36,6 +36,26 @@ def get_end_date(ticker, market_code):
     return data.iloc[-1].at['Date']
 
 
+def mad(series):
+    return (series - series.median()).abs().median()
+
+
+def modified_z_scores(series):
+    series_mad = mad(series)
+
+    if mad == 0:
+        raise ValueError
+        return 0
+
+    return 0.6745 * (series - series.median()) / series_mad
+
+
+def outliers(series, threshold=10):
+    z_scores = modified_z_scores(series)
+
+    return series[z_scores.abs() > threshold]
+
+
 def momentum(ticker, market_code):
     days_in_month = 22
     path = utility.ticker_csv_path(ticker, market_code)

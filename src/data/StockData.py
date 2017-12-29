@@ -3,6 +3,8 @@ import settings
 import matplotlib.pyplot as plt
 import numpy as np
 import src.data.dataLoader as dataLoader
+import src.data.stats as stats
+import datetime
 
 
 class StockData:
@@ -43,25 +45,17 @@ class StockData:
     def last_months_mean_volume(self, months):
         return self.data[self.volume_column].resample('BM', convention='end').asfreq()[-months - 1:-1].mean()
 
+    def last_days_outliers(self, days=365):
+        start_date = datetime.datetime.today().date() - datetime.timedelta(days=days)
+        start_index = self.data.index.get_loc(start_date, method='nearest')
+
+        return stats.outliers(self.adjusted_close()[start_index:].pct_change())
+
     def cumulative_daily_returns(self):
         return (1 + self.daily_returns()).cumprod()
 
     def daily_log_returns(self):
         return np.log(1 + self.daily_returns())
-
-    def returns_outliers(self, threshold=10):
-        returns = self.daily_returns()
-        z_scores = self.returns_modified_z_scores()
-
-        return returns[z_scores.abs() > threshold]
-
-    def returns_modified_z_scores(self):
-        returns = self.daily_returns()
-        return 0.6745 * (returns - returns.median()) / self.returns_mad()
-
-    def returns_mad(self):
-        returns = self.daily_returns()
-        return (returns - returns.median()).abs().median()
 
     def number_of_whole_months(self):
         start_date = self.data.index[0]

@@ -62,6 +62,7 @@ class Market:
             print('Downloading data')
             source = self.data_source
             path_root = self.data_path
+
         end_date = datetime.datetime.today().date()
 
         for stock_name in allStocks.read_all_stock_names(self.code):
@@ -84,9 +85,9 @@ class Market:
 
         start_date = old_data.end_date()
         new_data = self._download_stock_data(stock_name, data_source, start_date, end_date, update_limit)
-        concatenated = pd.concat([old_data.data, new_data])
+        concatenated = pd.concat([old_data.data, new_data]).sort_index()
 
-        return concatenated[~concatenated.duplicated()]
+        return concatenated[~concatenated.index.duplicated()]
 
     def _download_stock_data(self, stock_name, data_source, start_date, end_date, update_limit):
         stock_data = None
@@ -112,16 +113,19 @@ class Market:
     def momenta(self, months=12):
         momenta = {}
         volumes = {}
+        outliers = {}
 
         for stock_data in self.stocks_data:
             if stock_data.number_of_whole_months() >= months:
                 momenta[stock_data.ticker] = stock_data.last_months_total_return(months)
                 volumes[stock_data.ticker] = stock_data.last_months_mean_volume(months)
+                outliers[stock_data.ticker] = not stock_data.last_days_outliers(months * 30.5).empty
 
-        result = pd.DataFrame({'Momentum': momenta, 'Mean Volume': volumes}).sort_values(by=['Momentum'])
+        result = pd.DataFrame({'Momentum': momenta, 'Mean Volume': volumes, 'Outlier': outliers}).sort_values(
+            by=['Momentum'])
         result.to_csv(os.path.join(settings.RESOURCES_ROOT, 'out', 'momenta.csv'))
 
 
 if __name__ == '__main__':
     # Market('BR').momenta()
-    Market('BR').download_all_stock_data(data_type='actions')
+    Market('BR').download_all_stock_data()
