@@ -78,7 +78,7 @@ class Market:
         print('Downloading done')
 
     def _update_stock_data(self, data_source, stock_name, end_date, update_limit):
-        if data_source == self.actions_path:
+        if data_source == self.actions_source:
             old_data = stockActions.StockActions(self.code, stock_name)
         else:
             old_data = self.get_stock_data(stock_name)
@@ -105,7 +105,7 @@ class Market:
     def _download_stock_data_core(self, stock_name, data_source, start_date, end_date):
         url_code = stock_name + "." + self.code
         try:
-            return data.DataReader(url_code, data_source, start_date, end_date, retry_count=3, pause=3).sort_index()
+            return data.DataReader(url_code, data_source, start_date, end_date).sort_index()
         except ValueError:
             print("No data found for " + stock_name)
             return None
