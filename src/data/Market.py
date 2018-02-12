@@ -13,7 +13,7 @@ class Market:
     start_date = datetime.date(1990, 1, 1)
     data_path = 'data'
     actions_path = 'actions'
-    data_source = 'yahoo'
+    data_source = 'morningstar'
     actions_source = 'yahoo-actions'
 
     def __init__(self, code):
@@ -103,12 +103,21 @@ class Market:
         return stock_data
 
     def _download_stock_data_core(self, stock_name, data_source, start_date, end_date):
-        url_code = stock_name + "." + self.code
+        url_code = self._url_code(stock_name, data_source)
         try:
-            return data.DataReader(url_code, data_source, start_date, end_date).sort_index()
+            return data.DataReader(url_code, data_source, start_date, end_date, retry_count=0).sort_index()
         except ValueError:
             print("No data found for " + stock_name)
             return None
+
+    def _url_code(self, stock_name, data_source):
+        if data_source == 'yahoo':
+            return stock_name + "." + self.code
+
+        if data_source == 'morningstar':
+            return self.code + ":" + stock_name
+
+        raise ValueError('Unexpected data_source: ' + data_source)
 
     def momenta(self, months=12):
         momenta = {}
@@ -127,5 +136,5 @@ class Market:
 
 
 if __name__ == '__main__':
-    # Market('BR').momenta()
-    Market('BR').download_all_stock_data(data_type='actions')
+    Market('XBRU').momenta()
+    # Market('XBRU').download_all_stock_data()

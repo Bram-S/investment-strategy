@@ -9,7 +9,7 @@ import datetime
 
 class StockData:
     date_column = 'Date'
-    adj_close_column = 'Adj Close'
+    adj_close_column = 'Close'
     volume_column = 'Volume'
 
     def __init__(self, market_code, ticker):
