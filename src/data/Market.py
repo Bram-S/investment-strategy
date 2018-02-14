@@ -11,16 +11,24 @@ import src.data.stockActions as stockActions
 
 class Market:
     start_date = datetime.date(1990, 1, 1)
-    data_path = 'data'
-    actions_path = 'actions'
+    data_folder = 'data'
+    actions_folder = 'actions'
     data_source = 'morningstar'
     actions_source = 'yahoo-actions'
 
     def __init__(self, code):
         self.code = code
         self.path_root = os.path.join(settings.RESOURCES_ROOT, code)
-        self.data_path = os.path.join(self.path_root, self.data_path)
-        self.actions_path = os.path.join(self.path_root, self.actions_path)
+
+        if not os.path.exists(self.path_root):
+            raise ValueError('Invalid market code: ' + self.code)
+
+        self.data_path = os.path.join(self.path_root, self.data_folder)
+
+        if not os.path.exists(self.data_path):
+            os.makedirs(self.data_path)
+
+        self.actions_path = os.path.join(self.path_root, self.actions_folder)
         self.stock_names = self._get_stock_names()
         self.stocks_data = self.load_stocks_data()
 
@@ -136,5 +144,5 @@ class Market:
 
 
 if __name__ == '__main__':
-    Market('XBRU').momenta()
-    # Market('XBRU').download_all_stock_data()
+    # Market('XBRU').momenta()
+    Market('XAMS').download_all_stock_data()
