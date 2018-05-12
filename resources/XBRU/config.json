@@ -1,5 +1,5 @@
 {
-  "all_stocks_file": "Euronext_Equities_EU_2017-12-26_clean.csv",
+  "all_stocks_file": "Euronext_Equities_EU_2018-02-14_clean.csv",
   "separator": ";",
   "ISIN_prefix": "BE",
   "market_name": "Euronext Brussels"

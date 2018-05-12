@@ -28,6 +28,10 @@ class Market:
         if not os.path.exists(self.data_path):
             os.makedirs(self.data_path)
 
+        self.out_path = os.path.join(settings.RESOURCES_ROOT, 'out')
+        if not os.path.exists(self.out_path):
+            os.makedirs(self.out_path)
+
         self.actions_path = os.path.join(self.path_root, self.actions_folder)
         self.stock_names = self._get_stock_names()
         self.stocks_data = self.load_stocks_data()
@@ -113,8 +117,11 @@ class Market:
     def _download_stock_data_core(self, stock_name, data_source, start_date, end_date):
         url_code = self._url_code(stock_name, data_source)
         try:
-            return data.DataReader(url_code, data_source, start_date, end_date, retry_count=0).sort_index()
-        except ValueError:
+            stock_data = data.DataReader(url_code, data_source, start_date, end_date, retry_count=0)
+            stock_data.index = stock_data.index.droplevel(0)
+
+            return stock_data.sort_index()
+        except (ValueError, TypeError):
             print("No data found for " + stock_name)
             return None
 
@@ -140,9 +147,9 @@ class Market:
 
         result = pd.DataFrame({'Momentum': momenta, 'Mean Volume': volumes, 'Outlier': outliers}).sort_values(
             by=['Momentum'])
-        result.to_csv(os.path.join(settings.RESOURCES_ROOT, 'out', 'momenta.csv'))
+        result.to_csv(os.path.join(self.out_path, 'momenta' + '_' + self.code + '.csv'))
 
 
 if __name__ == '__main__':
-    # Market('XBRU').momenta()
-    Market('XAMS').download_all_stock_data()
+    Market('XPAR').download_all_stock_data()
+    Market('XPAR').momenta()
