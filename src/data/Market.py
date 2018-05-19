@@ -137,16 +137,14 @@ class Market:
     def momenta(self, months=12):
         momenta = {}
         volumes = {}
-        outliers = {}
 
         for stock_data in self.stocks_data:
             if stock_data.number_of_whole_months() >= months:
                 momenta[stock_data.ticker] = stock_data.last_months_total_return(months)
                 volumes[stock_data.ticker] = stock_data.last_months_mean_volume(months)
-                outliers[stock_data.ticker] = not stock_data.last_days_outliers(months * 30.5).empty
 
-        result = pd.DataFrame({'Momentum': momenta, 'Mean Volume': volumes, 'Outlier': outliers}).sort_values(
-            by=['Momentum'])
+        result = pd.DataFrame({'Momentum': momenta, 'Mean Volume': volumes})
+        result = result.sort_values(by=['Momentum'], ascending=False)
         result.to_csv(os.path.join(self.out_path, 'momenta' + '_' + self.code + '.csv'))
 
 
