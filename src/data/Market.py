@@ -145,7 +145,6 @@ class Market:
 
         result = pd.DataFrame({'Momentum': momenta, 'Mean Volume': volumes})
         result = result.sort_values(by=['Momentum'], ascending=False)
-        result.to_csv(os.path.join(self.out_path, 'momenta' + '_' + self.code + '.csv'))
 
 
 if __name__ == '__main__':
