@@ -6,7 +6,7 @@ momenta_dict = {}
 
 for m in markets:
     market = Market.Market(m)
-    print('Downloading ' + market)
+    print('Downloading ' + m)
     market.download_all_stock_data()
     momenta_dict[m] = market.momenta()
 
