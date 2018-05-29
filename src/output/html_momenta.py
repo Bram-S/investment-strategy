@@ -23,7 +23,7 @@ def create_html_from_dict(momenta_dict):
     last_edited_time = str(datetime.now())
     momenta_path = os.path.join(settings.RESOURCES_ROOT, 'out', 'all_momenta')
 
-    for code, momenta in momenta_dict:
+    for code, momenta in momenta_dict.items():
         html += _momemta_to_html_table(momenta, code, last_edited_time)
 
     soup = BeautifulSoup(html, 'lxml')
