@@ -68,5 +68,3 @@ if __name__ == '__main__':
     data = StockData('XBRU', 'MITRA')
     print(data.end_date())
     data.plot()
-    # TODO 'BR' 'PROX' has very big outliers => we need a way to remove outliers
-    # also BEAB weird in beginning

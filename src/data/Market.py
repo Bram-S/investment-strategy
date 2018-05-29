@@ -144,7 +144,7 @@ class Market:
                 volumes[stock_data.ticker] = stock_data.last_months_mean_volume(months)
 
         result = pd.DataFrame({'Momentum': momenta, 'Mean Volume': volumes})
-        result = result.sort_values(by=['Momentum'], ascending=False)
+        return result.sort_values(by=['Momentum'], ascending=False)
 
 
 if __name__ == '__main__':
